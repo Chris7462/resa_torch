@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resa_torch"
+version = "0.1.0"
+description = "RESA: Recurrent Feature-Shift Aggregator for Lane Detection"
+readme = "ReadMe.md"
+license = {text = "MIT"}
+authors = [
+    {name = "chris7462", email = "chris7462@gmail.com"}
+]
+requires-python = ">=3.10"
+dependencies = [
+    "torch",
+    "torchvision",
+    "numpy",
+    "opencv-python",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+train = [
+    "albumentations",
+    "matplotlib",
+    "scipy",
+]
+
+[tool.setuptools.packages.find]
+include = ["resa_torch*"]

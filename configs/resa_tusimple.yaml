@@ -1,0 +1,74 @@
+# RESA Configuration for TuSimple Dataset
+
+# Model
+model:
+  backbone: resnet34
+  pretrained: true
+  num_classes: 7  # 6 lanes + background
+  aggregator_channels: 128
+  aggregator_iters: 5
+  aggregator_kernel_size: 9
+  aggregator_alpha: 2.0
+  decoder_type: BUSDDecoder
+
+# Dataset
+dataset:
+  root: data/tusimple
+  resize_shape: [368, 640]  # [height, width]
+
+# Dataloader
+dataloader:
+  batch_size: 4
+  num_workers: 4
+
+# Training
+train:
+  max_iter: 80000
+  seed: 42
+
+# Augmentation
+augmentation:
+  rotation: 2.0  # Rotation in degrees (samples from [-rotation/2, rotation/2])
+
+# Optimizer
+optimizer:
+  type: SGD
+  lr: 0.020
+  momentum: 0.9
+  weight_decay: 0.0001
+  nesterov: true
+
+# Learning rate scheduler
+lr_scheduler:
+  power: 0.9
+  warmup: 500
+  min_lr: 1.0e-20
+
+# Loss
+loss:
+  type: cross_entropy  # 'cross_entropy' or 'dice'
+  seg_weight: 1.0
+  exist_weight: 0.1
+  background_weight: 0.4
+
+# Normalization (ImageNet statistics)
+normalize:
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]
+
+# Checkpoint
+checkpoint:
+  save_dir: checkpoints/tusimple
+  interval: 2000
+
+# Logging
+logging:
+  print_interval: 100
+
+# Evaluation
+evaluation:
+  y_px_gap: 10
+  pts: 56
+  thresh: 0.6
+  iou_threshold: 0.5
+  lane_width: 30

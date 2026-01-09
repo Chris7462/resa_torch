@@ -1,3 +1,11 @@
+"""
+Evaluator for lane detection inference.
+
+Runs inference on test set and saves predictions to files.
+Supports both CULane (.txt) and TuSimple (.json) formats.
+"""
+
+import json
 from pathlib import Path
 
 import cv2
@@ -6,18 +14,24 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..utils import prob2lines, get_save_path, resize_seg_pred
-from ..utils import visualize_lanes
+from ..utils import (
+    prob2lines,
+    prob2lines_tusimple,
+    get_save_path,
+    resize_seg_pred,
+    TUSIMPLE_H_SAMPLES,
+    visualize_lanes,
+)
 
 
 class Evaluator:
     """
-    Evaluator for RESA model.
+    Evaluator for lane detection model.
 
     Runs inference on test set and saves predictions to files.
 
     Args:
-        model: RESA model
+        model: Lane detection model
         test_loader: Test data loader
         config: Configuration dictionary
         device: Device to run on
@@ -41,6 +55,9 @@ class Evaluator:
         self.visualize = visualize
         self.num_visualize = num_visualize
 
+        # Dataset type
+        self.dataset_type = config['dataset']['type']
+
         # Output settings
         self.output_dir = Path(config['output_dir'])
         self.pred_dir = self.output_dir / 'predictions'
@@ -54,6 +71,9 @@ class Evaluator:
         self.y_px_gap = eval_cfg['y_px_gap']
         self.pts = eval_cfg['pts']
         self.thresh = eval_cfg['thresh']
+
+        # TuSimple-specific
+        self.tusimple_predictions = []
 
         # Visualization counter
         self.vis_count = 0
@@ -92,7 +112,10 @@ class Evaluator:
                     # Resize seg_pred to original image size
                     seg_pred_resized = resize_seg_pred(seg_pred[i], original_size[i])
 
-                    self._save_prediction(seg_pred_resized, exist_pred[i], img_name[i])
+                    if self.dataset_type == 'CULane':
+                        self._save_prediction_culane(seg_pred_resized, exist_pred[i], img_name[i])
+                    elif self.dataset_type == 'TuSimple':
+                        self._save_prediction_tusimple(seg_pred_resized, exist_pred[i], img_name[i])
 
                     if self.visualize and self.vis_count < self.num_visualize:
                         self._save_visualization(seg_pred_resized, exist_pred[i], img_name[i])
@@ -102,22 +125,26 @@ class Evaluator:
                 if (batch_idx + 1) % 100 == 0:
                     print(f"  Processed {batch_idx + 1}/{num_batches} batches")
 
+        # Save TuSimple predictions to JSON
+        if self.dataset_type == 'TuSimple':
+            self._save_tusimple_json()
+
         print(f"\nPredictions saved to: {self.pred_dir}")
         if self.visualize:
             print(f"Visualizations saved to: {self.vis_dir}")
         return self.output_dir
 
-    def _save_prediction(
+    def _save_prediction_culane(
         self,
         seg_pred: np.ndarray,
         exist_pred: np.ndarray,
         img_name: str,
     ) -> None:
         """
-        Save lane prediction to file.
+        Save lane prediction to CULane format (.txt file).
 
         Args:
-            seg_pred: Segmentation probabilities (C, H, W) at original image size
+            seg_pred: Segmentation probabilities (num_classes, H, W) at original image size
             exist_pred: Existence probabilities (num_lanes,)
             img_name: Original image path
         """
@@ -141,6 +168,58 @@ class Evaluator:
                     f.write(f"{x} {y} ")
                 f.write("\n")
 
+    def _save_prediction_tusimple(
+        self,
+        seg_pred: np.ndarray,
+        exist_pred: np.ndarray,
+        img_name: str,
+    ) -> None:
+        """
+        Save lane prediction for TuSimple format (accumulates to JSON).
+
+        Args:
+            seg_pred: Segmentation probabilities (num_classes, H, W) at original image size
+            exist_pred: Existence probabilities (num_lanes,)
+            img_name: Original image path
+        """
+        # Get lane coordinates at h_samples
+        lanes = prob2lines_tusimple(
+            seg_pred,
+            exist_pred,
+            h_samples=TUSIMPLE_H_SAMPLES,
+            thresh=self.thresh,
+        )
+
+        # Extract relative path for raw_file
+        # img_name: /path/to/tusimple/clips/xxx/xxx/xxx.jpg
+        # raw_file: clips/xxx/xxx/xxx.jpg
+        img_path = Path(img_name)
+        try:
+            clips_idx = img_path.parts.index('clips')
+            raw_file = '/'.join(img_path.parts[clips_idx:])
+        except ValueError:
+            raw_file = img_name
+
+        # Create prediction entry
+        pred_entry = {
+            'raw_file': raw_file,
+            'lanes': lanes,
+            'h_samples': TUSIMPLE_H_SAMPLES,
+            'run_time': 0,  # Placeholder
+        }
+
+        self.tusimple_predictions.append(pred_entry)
+
+    def _save_tusimple_json(self) -> None:
+        """Save all TuSimple predictions to JSON file."""
+        json_path = self.pred_dir / 'predict_test.json'
+
+        with open(json_path, 'w') as f:
+            for pred in self.tusimple_predictions:
+                f.write(json.dumps(pred) + '\n')
+
+        print(f"TuSimple predictions saved to: {json_path}")
+
     def _save_visualization(
         self,
         seg_pred: np.ndarray,
@@ -151,7 +230,7 @@ class Evaluator:
         Save visualization of prediction.
 
         Args:
-            seg_pred: Segmentation probabilities (C, H, W) at original image size
+            seg_pred: Segmentation probabilities (num_classes, H, W) at original image size
             exist_pred: Existence probabilities (num_lanes,)
             img_name: Original image path
         """
@@ -166,6 +245,13 @@ class Evaluator:
         img_overlay = cv2.cvtColor(img_overlay, cv2.COLOR_RGB2BGR)
 
         # Save visualization
-        save_path = get_save_path(img_name, self.vis_dir, '.jpg')
+        if self.dataset_type == 'CULane':
+            save_path = get_save_path(img_name, self.vis_dir, '.jpg')
+        else:
+            # TuSimple: flatten directory structure
+            img_path = Path(img_name)
+            save_name = '_'.join(img_path.parts[-3:])
+            save_path = self.vis_dir / save_name
+
         save_path.parent.mkdir(parents=True, exist_ok=True)
         cv2.imwrite(str(save_path), img_overlay)

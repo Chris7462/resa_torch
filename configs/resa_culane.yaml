@@ -15,21 +15,29 @@ model:
 dataset:
   type: CULane
   root: data/CULane
-  resize_shape: [288, 800]  # [height, width]
+
+# Preprocessing (train + val)
+preprocessing:
+  resize_shape: [288, 800]
+
+# Augmentation (train only)
+augmentation:
+  rotation: 2.0
+
+# Normalization (ImageNet statistics)
+normalize:
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]
 
 # Dataloader
 dataloader:
-  batch_size: 8
+  batch_size: 4
   num_workers: 4
 
 # Training
 train:
   max_iter: 100000
   seed: 42
-
-# Augmentation
-augmentation:
-  rotation: 2.0  # Rotation in degrees (samples from [-rotation/2, rotation/2])
 
 # Optimizer
 optimizer:
@@ -52,12 +60,7 @@ loss:
   exist_weight: 0.1
   background_weight: 0.4
 
-# Normalization (ImageNet statistics)
-normalize:
-  mean: [0.485, 0.456, 0.406]
-  std: [0.229, 0.224, 0.225]
-
-# Checkpoint
+# Checkpoints
 checkpoint:
   save_dir: checkpoints/culane
   interval: 2000

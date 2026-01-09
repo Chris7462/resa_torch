@@ -12,7 +12,7 @@ from .postprocessing import (
     resize_seg_pred,
     TUSIMPLE_H_SAMPLES,
 )
-from .registry import Registry
+from .registry import Registry, build_from_cfg
 from .seed import set_seed
 from .tusimple_eval import evaluate_tusimple, TuSimpleEvaluator
 from .visualization import visualize_lanes
@@ -41,6 +41,7 @@ __all__ = [
     "TUSIMPLE_H_SAMPLES",
     # Registry
     "Registry",
+    "build_from_cfg",
     # Seed
     "set_seed",
     # Visualization

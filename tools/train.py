@@ -4,7 +4,7 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-from resa_torch.datasets import DATASETS
+from resa_torch.datasets import build_dataset
 from resa_torch.datasets.transforms import get_train_transforms, get_val_transforms
 from resa_torch.model import RESA
 from resa_torch.model.loss import RESALoss
@@ -23,7 +23,7 @@ def parse_args():
 
 def build_transforms(config: dict, is_train: bool = True):
     """Build transforms for training or validation."""
-    resize_shape = tuple(config['dataset']['resize_shape'])
+    resize_shape = tuple(config['preprocessing']['resize_shape'])
     mean = tuple(config['normalize']['mean'])
     std = tuple(config['normalize']['std'])
 
@@ -36,11 +36,8 @@ def build_transforms(config: dict, is_train: bool = True):
 
 def build_dataloader(config: dict, image_set: str, transforms):
     """Build dataloader for given image set."""
-    dataset_cfg = config['dataset']
-    dataset_cls = DATASETS.get(dataset_cfg['type'])
-
-    dataset = dataset_cls(
-        root=dataset_cfg['root'],
+    dataset = build_dataset(
+        config['dataset'],
         image_set=image_set,
         transforms=transforms
     )

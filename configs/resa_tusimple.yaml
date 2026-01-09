@@ -15,7 +15,19 @@ model:
 dataset:
   type: TuSimple
   root: data/tusimple
-  resize_shape: [368, 640]  # [height, width]
+
+# Preprocessing (train + val)
+preprocessing:
+  resize_shape: [368, 640]
+
+# Augmentation (train only)
+augmentation:
+  rotation: 2.0
+
+# Normalization (ImageNet statistics)
+normalize:
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]
 
 # Dataloader
 dataloader:
@@ -26,10 +38,6 @@ dataloader:
 train:
   max_iter: 80000
   seed: 42
-
-# Augmentation
-augmentation:
-  rotation: 2.0  # Rotation in degrees (samples from [-rotation/2, rotation/2])
 
 # Optimizer
 optimizer:
@@ -52,12 +60,7 @@ loss:
   exist_weight: 0.1
   background_weight: 0.4
 
-# Normalization (ImageNet statistics)
-normalize:
-  mean: [0.485, 0.456, 0.406]
-  std: [0.229, 0.224, 0.225]
-
-# Checkpoint
+# Checkpoints
 checkpoint:
   save_dir: checkpoints/tusimple
   interval: 2000

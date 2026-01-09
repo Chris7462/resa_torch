@@ -13,6 +13,7 @@ model:
 
 # Dataset
 dataset:
+  type: TuSimple
   root: data/tusimple
   resize_shape: [368, 640]  # [height, width]
 

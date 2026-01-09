@@ -13,6 +13,7 @@ model:
 
 # Dataset
 dataset:
+  type: CULane
   root: data/CULane
   resize_shape: [288, 800]  # [height, width]
 

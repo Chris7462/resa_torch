@@ -10,6 +10,7 @@ model:
   aggregator_kernel_size: 9
   aggregator_alpha: 2.0
   decoder_type: BUSDDecoder
+  exist_pool_size: [23, 40]
 
 # Dataset
 dataset:
@@ -59,6 +60,7 @@ loss:
   seg_weight: 1.0
   exist_weight: 0.1
   background_weight: 0.4
+  ignore_index: 255
 
 # Checkpoints
 checkpoint:

@@ -3,7 +3,7 @@ import argparse
 import torch
 from torch.utils.data import DataLoader
 
-from resa_torch.datasets import DATASETS
+from resa_torch.datasets import build_dataset
 from resa_torch.datasets.transforms import get_val_transforms
 from resa_torch.model import RESA
 from resa_torch.engine import Evaluator
@@ -27,7 +27,7 @@ def parse_args():
 
 def build_transforms(config: dict):
     """Build transforms for testing."""
-    resize_shape = tuple(config['dataset']['resize_shape'])
+    resize_shape = tuple(config['preprocessing']['resize_shape'])
     mean = tuple(config['normalize']['mean'])
     std = tuple(config['normalize']['std'])
 
@@ -36,11 +36,8 @@ def build_transforms(config: dict):
 
 def build_dataloader(config: dict, transforms):
     """Build test dataloader."""
-    dataset_cfg = config['dataset']
-    dataset_cls = DATASETS.get(dataset_cfg['type'])
-
-    dataset = dataset_cls(
-        root=dataset_cfg['root'],
+    dataset = build_dataset(
+        config['dataset'],
         image_set='test',
         transforms=transforms
     )
@@ -70,6 +67,7 @@ def build_model(config: dict):
         aggregator_kernel_size=model_cfg['aggregator_kernel_size'],
         aggregator_alpha=model_cfg['aggregator_alpha'],
         decoder_type=model_cfg['decoder_type'],
+        exist_pool_size=tuple(model_cfg['exist_pool_size']),
     )
 
     return model

@@ -52,6 +52,7 @@ class RESA(nn.Module):
         aggregator_kernel_size: int = 9,
         aggregator_alpha: float = 2.0,
         decoder_type: str = 'PlainDecoder',
+        exist_pool_size: tuple[int, int] = (18, 50),
     ) -> None:
         super().__init__()
 
@@ -78,6 +79,7 @@ class RESA(nn.Module):
 
         self.exist_head = ExistHead(
             in_channels=aggregator_channels,
+            pool_size=exist_pool_size,
             num_classes=num_classes,
         )
 

@@ -9,7 +9,8 @@ model:
   aggregator_iters: 4
   aggregator_kernel_size: 9
   aggregator_alpha: 2.0
-  decoder_type: PlainDecoder
+  decoder_type: BUSDDecoder # PlainDecoder or BUSDDecoder
+  exist_pool_size: [18, 50]
 
 # Dataset
 dataset:
@@ -31,12 +32,12 @@ normalize:
 
 # Dataloader
 dataloader:
-  batch_size: 4
+  batch_size: 8
   num_workers: 4
 
 # Training
 train:
-  max_iter: 100000
+  max_iter: 133320  # Changed from 100000: (88880 / 8) * 12 epochs
   seed: 42
 
 # Optimizer
@@ -55,10 +56,11 @@ lr_scheduler:
 
 # Loss
 loss:
-  type: dice  # 'cross_entropy' or 'dice'
-  seg_weight: 2.0
+  type: cross_entropy  # 'cross_entropy' or 'dice'
+  seg_weight: 1.0  # 1.0 for cross_entropy and 2.0 for dice
   exist_weight: 0.1
   background_weight: 0.4
+  ignore_index: 255
 
 # Checkpoints
 checkpoint:

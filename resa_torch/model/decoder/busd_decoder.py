@@ -149,8 +149,4 @@ class BUSDDecoder(nn.Module):
         x = self.layers(x)
         x = self.output_conv(x)
 
-        # Adjust to exact output size if needed
-        if output_size is not None and (x.shape[2] != output_size[0] or x.shape[3] != output_size[1]):
-            x = F.interpolate(x, size=output_size, mode='bilinear', align_corners=False)
-
         return x

@@ -11,14 +11,14 @@ class ExistHead(nn.Module):
 
     Architecture:
         Dropout → Conv(in_channels→num_classes, 1x1) → Softmax →
-        AdaptiveAvgPool(1,1) → Flatten →
-        FC(num_classes→hidden) → ReLU →
-        FC(hidden→num_lanes)
+        AdaptiveAvgPool(pool_size) → Flatten →
+        FC(num_classes*pool_h*pool_w → 128) → ReLU → FC(128 → num_lanes)
 
     Args:
         in_channels: Number of input channels from aggregator
+        pool_size: Output size for adaptive pooling (H, W)
+                   CULane: (18, 50), TuSimple: (23, 40)
         num_classes: Number of segmentation classes (including background)
-        hidden_channels: Hidden layer size in FC layers
 
     Output:
         Existence logits of shape (B, num_lanes) where num_lanes = num_classes - 1
@@ -28,8 +28,8 @@ class ExistHead(nn.Module):
     def __init__(
         self,
         in_channels: int = 128,
-        num_classes: int = 5,
-        hidden_channels: int = 128,
+        pool_size: tuple[int, int] = (18, 50),
+        num_classes: int = 5
     ) -> None:
         super().__init__()
 
@@ -37,9 +37,20 @@ class ExistHead(nn.Module):
 
         self.dropout = nn.Dropout2d(0.1)
         self.conv = nn.Conv2d(in_channels, num_classes, kernel_size=1)
-        self.pool = nn.AdaptiveAvgPool2d(1)
-        self.fc1 = nn.Linear(num_classes, hidden_channels)
-        self.fc2 = nn.Linear(hidden_channels, num_lanes)
+
+        self.pool = nn.Sequential(
+            nn.Softmax(dim=1),
+            nn.AdaptiveAvgPool2d(pool_size),
+        )
+
+        fc_input_features = num_classes * pool_size[0] * pool_size[1]
+
+        self.fc = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(fc_input_features, 128),
+            nn.ReLU(inplace=True),
+            nn.Linear(128, num_lanes),
+        )
 
     def forward(self, x: Tensor) -> Tensor:
         """
@@ -51,10 +62,7 @@ class ExistHead(nn.Module):
         """
         x = self.dropout(x)
         x = self.conv(x)
-        x = F.softmax(x, dim=1)
         x = self.pool(x)
-        x = x.flatten(1)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = self.fc(x)
 
         return x

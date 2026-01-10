@@ -32,7 +32,7 @@ class RESALoss(nn.Module):
         seg_weight: float = 1.0,
         exist_weight: float = 0.1,
         background_weight: float = 0.4,
-        ignore_label: int = 255,
+        ignore_index: int = 255,
     ) -> None:
         super().__init__()
 
@@ -44,7 +44,7 @@ class RESALoss(nn.Module):
         if loss_type == 'cross_entropy':
             weights = torch.ones(num_classes)
             weights[0] = background_weight
-            self.seg_loss = nn.CrossEntropyLoss(weight=weights, ignore_index=ignore_label)
+            self.seg_loss = nn.CrossEntropyLoss(weight=weights, ignore_index=ignore_index)
         elif loss_type == 'dice':
             self.seg_loss = None  # Computed in forward
         else:

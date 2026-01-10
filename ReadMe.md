@@ -59,24 +59,24 @@ python tools/train.py --config configs/resa_tusimple.yaml
 
 Resume from checkpoint:
 ```bash
-python tools/train.py --config configs/resa_culane.yaml --resume checkpoints/latest.pth
+python tools/train.py --config configs/resa_culane.yaml --resume checkpoints/culane/latest.pth
 ```
 
 ## Testing
 ```bash
-python tools/test.py --config configs/resa_culane.yaml --checkpoint checkpoints/best.pth
-python tools/test.py --config configs/resa_tusimple.yaml --checkpoint checkpoints/best.pth
+python tools/test.py --config configs/resa_culane.yaml --checkpoint checkpoints/culane/best.pth
+python tools/test.py --config configs/resa_tusimple.yaml --checkpoint checkpoints/tusimple/best.pth
 ```
 
 With visualization:
 ```bash
-python tools/test.py --config configs/resa_culane.yaml --checkpoint checkpoints/best.pth --visualize
+python tools/test.py --config configs/resa_culane.yaml --checkpoint checkpoints/culane/best.pth --visualize
 ```
 
 ## Evaluation
 ```bash
-python tools/evaluate.py --config configs/resa_culane.yaml --pred_dir outputs/predictions
-python tools/evaluate.py --config configs/resa_tusimple.yaml --pred_dir outputs/predictions
+python tools/evaluate.py --config configs/resa_culane.yaml --pred_dir outputs/culane/predictions
+python tools/evaluate.py --config configs/resa_tusimple.yaml --pred_dir outputs/culane/predictions
 ```
 
 ## Model Architecture

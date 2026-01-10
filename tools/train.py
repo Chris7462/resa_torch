@@ -68,6 +68,7 @@ def build_model(config: dict):
         aggregator_kernel_size=model_cfg['aggregator_kernel_size'],
         aggregator_alpha=model_cfg['aggregator_alpha'],
         decoder_type=model_cfg['decoder_type'],
+        exist_pool_size=tuple(model_cfg['exist_pool_size']),
     )
 
     return model
@@ -114,7 +115,8 @@ def build_criterion(config: dict):
         loss_type=loss_cfg['type'],
         seg_weight=loss_cfg['seg_weight'],
         exist_weight=loss_cfg['exist_weight'],
-        background_weight=loss_cfg['background_weight']
+        background_weight=loss_cfg['background_weight'],
+        ignore_index=loss_cfg['ignore_index']
     )
 
     return criterion
